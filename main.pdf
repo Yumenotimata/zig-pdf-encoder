@@ -1,0 +1,36 @@
+%PDF-1.7
+1 0 obj
+<< >>
+stream
+BT
+(hello, world) Tj
+ET
+endstream
+endobj
+2 0 obj
+<< >>
+stream
+BT
+(im fine) Tj
+ET
+endstream
+endobj
+3 0 obj
+<< >>
+stream
+BT
+(thank you!) Tj
+ET
+endstream
+endobj
+xref
+0 4
+0000000009 undefined undefined 
+0000000009 undefined undefined 
+0000000071 undefined undefined 
+0000000128 undefined undefined 
+trailer
+<<
+/Root undefined undefined R
+/Size undefined
+>>
