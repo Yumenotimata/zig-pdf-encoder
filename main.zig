@@ -1,7 +1,7 @@
 const std = @import("std");
 const print = std.debug.print;
 
-const PdfObjectType = enum { ref, name, text, dictionary };
+const PdfObjectType = enum { ref, name, text, dictionary, stream };
 
 const PdfObject = union(PdfObjectType) {
     ref: Ref,
@@ -19,6 +19,10 @@ const PdfObject = union(PdfObjectType) {
         pub fn pair(key: PdfObject, value: PdfObject) Pair {
             return .{ .key = key, .value = value };
         }
+    };
+
+    const Stream = struct {
+        length: Dictionary,
     };
 
     pub fn ref(number: u64, generation: u64) PdfObject {
@@ -59,14 +63,9 @@ const PdfEncoder = struct {
         try self.objects.append(obj);
     }
 
-    pub fn encode(self: *Self, filepath: []const u8) !void {
-        const file = try std.fs.cwd().createFile(
-            filepath,
-            .{ .read = true },
-        );
-        defer file.close();
-
-        const writer = file.writer();
+    pub fn encode(self: *Self, ss: *std.io.StreamSource) !void {
+        const file = ss.file;
+        const writer = ss.writer();
 
         // header
         try writer.print("%PDF-1.7\n", .{});
@@ -93,6 +92,8 @@ const PdfEncoder = struct {
             const byte_offset = stat.size;
             try cross_reference_table.append(byte_offset);
 
+            try PdfObject.encode(obj, writer);
+
             switch (obj) {
                 .text => {
                     try writer.print("{d} {d} obj\n", .{ number, 0 });
@@ -103,6 +104,11 @@ const PdfEncoder = struct {
                     try writer.print("ET\n", .{});
                     try writer.print("endstream\n", .{});
                     try writer.print("endobj\n", .{});
+                },
+                .dictionary => {
+                    try writer.print("<<\n", .{});
+                    // try writer.print("")
+                    try writer.print(">>\n", .{});
                 },
                 else => {},
             }
@@ -134,5 +140,6 @@ pub fn main() !void {
     try pdf_encoder.addText("hello, world");
     try pdf_encoder.addText("im fine");
     try pdf_encoder.addText("thank you!");
-    try pdf_encoder.encode("main.pdf");
+    var ss = std.io.StreamSource{ .file = try std.fs.cwd().createFile("main.pdf", .{}) };
+    try pdf_encoder.encode(&ss);
 }
